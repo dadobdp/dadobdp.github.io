@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["XS67F69U4Y.com.emotiquiz.app"],
+        "components": [{ "/": "/r", "comment": "A friend's rebus" }]
+      }
+    ]
+  }
+}

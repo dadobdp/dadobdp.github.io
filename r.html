@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EmotiQuiz · Rebus</title>
+<meta name="description" content="Un amico ti sfida con un rebus di emoji.">
+<meta property="og:title" content="Un amico ti sfida su EmotiQuiz!">
+<meta property="og:description" content="Indovina il titolo dalle emoji.">
+<style>
+  :root { --a: #2b2fb8; --b: #8a3ff5; --ok: #2ead5b; --err: #e5484d; --bg: #f4f1ff; --fg: #1c1b20; --card: #fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #17142b; --fg: #f1eefc; --card: #24203f; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--fg); display: flex; justify-content: center; }
+  main { width: 100%; max-width: 440px; padding: 24px 16px 40px; text-align: center; }
+  h1 { margin: 8px 0 4px; font-size: 26px; background: linear-gradient(90deg, var(--a), var(--b));
+       -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .kind { opacity: .8; margin-bottom: 16px; }
+  .plate { background: #ede7f3; border-radius: 28px; padding: 28px 12px; font-size: 52px; line-height: 1.3;
+           border: 2px solid rgba(138,63,245,.4); word-wrap: break-word; }
+  input { width: 100%; margin-top: 20px; padding: 16px; font-size: 18px; border-radius: 18px;
+          border: 2px solid rgba(138,63,245,.35); background: var(--card); color: var(--fg); }
+  button, .btn { display: block; width: 100%; margin-top: 12px; padding: 16px; font-size: 18px; font-weight: 800;
+                 border: 0; border-radius: 18px; color: #fff; text-decoration: none; cursor: pointer;
+                 background: linear-gradient(90deg, var(--a), var(--b)); }
+  .ghost { background: none; color: var(--b); font-weight: 700; }
+  .msg { min-height: 24px; margin-top: 10px; font-weight: 700; }
+  .answer { font-size: 28px; font-weight: 900; margin: 8px 0 4px; }
+  .stores a { display: inline-block; margin: 6px; color: var(--b); font-weight: 700; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Un amico ti sfida!</h1>
+  <div class="kind" id="kind"></div>
+  <div class="plate" id="emoji">🤔</div>
+  <div id="play">
+    <input id="guess" placeholder="La tua risposta…" autocomplete="off">
+    <button id="check">Verifica</button>
+    <div class="msg" id="msg"></div>
+    <button class="ghost" id="giveup">Fammi vedere la risposta</button>
+  </div>
+  <div id="done" hidden>
+    <div class="msg" id="result"></div>
+    <div class="answer" id="answer"></div>
+  </div>
+  <a class="btn" id="open" href="#">Apri in EmotiQuiz</a>
+  <p id="get">Non hai l'app? Scaricala gratis e crea i tuoi rebus:</p>
+  <div class="stores">
+    <a href="https://play.google.com/store/apps/details?id=com.emotiquiz.app">Google Play</a>
+    <a href="/">App Store</a>
+  </div>
+  <p id="broken" hidden>Questo link non si apre: chiedi al tuo amico di rimandarlo.</p>
+</main>
+<script>
+// Same format as lib/features/rebus/data/rebus_link.dart: "1" + base64url
+// (no padding) of the UTF-8 JSON, XORed with the key. Change both together.
+const KEY = "emotiquiz";
+const IT = (navigator.language || "").toLowerCase().startsWith("it");
+const T = IT ? {
+  title: "Un amico ti sfida!", from: (n) => n + " ti sfida!", guess: "La tua risposta…", check: "Verifica",
+  wrong: "Non è questa: riprova", giveup: "Fammi vedere la risposta", won: "Esatto! 🎉", was: "La risposta era",
+  open: "Apri in EmotiQuiz", get: "Non hai l'app? Scaricala gratis e crea i tuoi rebus:",
+  broken: "Questo link non si apre: chiedi al tuo amico di rimandarlo.",
+  kinds: ["🎬 Un film", "📺 Una serie TV", "🎵 Una canzone", "✨ Altro"],
+} : {
+  title: "A friend challenges you!", from: (n) => n + " challenges you!", guess: "Your answer…", check: "Check",
+  wrong: "Not this one: try again", giveup: "Show me the answer", won: "Correct! 🎉", was: "The answer was",
+  open: "Open in EmotiQuiz", get: "No app yet? Get it for free and make your own rebus:",
+  broken: "This rebus link doesn't open: ask your friend to send it again.",
+  kinds: ["🎬 A film", "📺 A TV series", "🎵 A song", "✨ Something else"],
+};
+const KINDS = T.kinds;
+const $ = (id) => document.getElementById(id);
+document.documentElement.lang = IT ? "it" : "en";
+$("title").textContent = T.title;
+$("guess").placeholder = T.guess;
+$("check").textContent = T.check;
+$("giveup").textContent = T.giveup;
+$("open").textContent = T.open;
+$("get").textContent = T.get;
+$("broken").textContent = T.broken;
+
+function decode(d) {
+  if (!d || d[0] !== "1") return null;
+  try {
+    let b = d.slice(1).replace(/-/g, "+").replace(/_/g, "/");
+    while (b.length % 4) b += "=";
+    const raw = atob(b);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) ^ KEY.charCodeAt(i % KEY.length);
+    const r = JSON.parse(new TextDecoder().decode(bytes));
+    if (!r.a || !Array.isArray(r.e) || r.e.length < 2) return null;
+    return r;
+  } catch (e) { return null; }
+}
+
+// Like AnswerMatcher, roughly: case, accents, punctuation and spaces don't count.
+const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const d = new URLSearchParams(location.search).get("d");
+const rebus = decode(d);
+if (!rebus) {
+  $("play").hidden = true; $("kind").hidden = true; $("broken").hidden = false;
+} else {
+  if (rebus.n) $("title").textContent = T.from(rebus.n);
+  $("kind").textContent = KINDS[rebus.k] || KINDS[3];
+  $("emoji").textContent = rebus.e.join(" ");
+  const finish = (won) => {
+    $("play").hidden = true; $("done").hidden = false;
+    $("result").textContent = won ? T.won : T.was;
+    $("result").style.color = won ? "var(--ok)" : "";
+    $("answer").textContent = rebus.a;
+  };
+  $("check").onclick = () => {
+    if (norm($("guess").value) && norm($("guess").value) === norm(rebus.a)) return finish(true);
+    $("msg").textContent = T.wrong; $("msg").style.color = "var(--err)";
+  };
+  $("guess").onkeydown = (e) => { if (e.key === "Enter") $("check").onclick(); };
+  $("giveup").onclick = () => finish(false);
+}
+// Android opens the app even before App Links are verified; elsewhere the
+// link itself (Universal Links) or the stores.
+const ua = navigator.userAgent;
+$("open").href = /Android/i.test(ua)
+  ? "intent://dadobdp.github.io/r" + location.search + "#Intent;scheme=https;package=com.emotiquiz.app;end"
+  : location.href;
+</script>
+</body>
+</html>
