@@ -73,6 +73,21 @@ const T = IT ? {
   kinds: ["🎬 A film", "📺 A TV series", "🎵 A song", "✨ Something else"],
 };
 const KINDS = T.kinds;
+// Newer links name the game's category ("c"; keep in step with
+// assets/content/categories.json); "k" stays for older ones.
+const CATEGORIES = {
+  film: ["🎬", "Film", "Movies"], serie: ["📺", "Serie TV", "TV Series"],
+  musica: ["🎵", "Canzoni", "Songs"],
+  animazione: ["🧸", "Cartoni e animazione", "Cartoons & Animation"],
+  modi: ["🗣️", "Modi di dire", "Sayings & Idioms"],
+  luoghi: ["🌍", "Luoghi del mondo", "Places of the World"],
+  paesi: ["🚩", "Paesi", "Countries"], videogiochi: ["🎮", "Videogiochi", "Video Games"],
+  libri: ["📚", "Libri", "Books"],
+};
+const kindOf = (rebus) => {
+  const c = CATEGORIES[rebus.c];
+  return c ? c[0] + " " + (IT ? c[1] : c[2]) : KINDS[rebus.k] || KINDS[3];
+};
 const $ = (id) => document.getElementById(id);
 document.documentElement.lang = IT ? "it" : "en";
 $("title").textContent = T.title;
@@ -106,7 +121,7 @@ if (!rebus) {
   $("play").hidden = true; $("kind").hidden = true; $("broken").hidden = false;
 } else {
   if (rebus.n) $("title").textContent = T.from(rebus.n);
-  $("kind").textContent = KINDS[rebus.k] || KINDS[3];
+  $("kind").textContent = kindOf(rebus);
   $("emoji").textContent = rebus.e.join(" ");
   const finish = (won) => {
     $("play").hidden = true; $("done").hidden = false;
