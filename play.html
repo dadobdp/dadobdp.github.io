@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EmotiQuiz · Play free</title>
+<meta name="description" content="Guess movies, shows and songs from emoji. Indovina film, serie e canzoni dalle emoji.">
+<meta property="og:title" content="EmotiQuiz · Guess it from the emoji">
+<meta property="og:description" content="Indovina film, serie e canzoni dalle emoji. Free on iPhone and Android.">
+<meta property="og:image" content="https://dadobdp.github.io/emotiquiz-icon.png">
+<link rel="icon" href="emotiquiz-icon.png">
+<style>
+  :root { --a: #2b2fb8; --b: #8a3ff5; --fg: #fff; --soft: rgba(255,255,255,.78); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; color: var(--fg); overflow-x: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg, var(--a), var(--b));
+    background-attachment: fixed;
+  }
+  .drift { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .drift span { position: absolute; font-size: 38px; opacity: .14; animation: float 14s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-26px) rotate(8deg); } }
+  main {
+    position: relative; max-width: 440px; margin: 0 auto; text-align: center;
+    padding: max(24px, env(safe-area-inset-top)) 20px max(32px, env(safe-area-inset-bottom));
+    min-height: 100%; display: flex; flex-direction: column; justify-content: center;
+  }
+  .lang { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; display: flex;
+          background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px; }
+  .lang button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; color: var(--soft); }
+  .lang button[aria-pressed="true"] { background: #fff; color: var(--a); }
+  .icon { width: 128px; height: 128px; margin: 0 auto 18px; border-radius: 30px;
+          box-shadow: 0 18px 40px rgba(20,10,60,.45); animation: pop .5s ease-out both; }
+  @keyframes pop { from { transform: scale(.7); opacity: 0; } }
+  h1 { margin: 0 0 6px; font-size: 38px; letter-spacing: -.5px; }
+  .tag { margin: 0 0 18px; font-size: 18px; color: var(--soft); line-height: 1.35; }
+  .plate { display: inline-flex; gap: 10px; background: #fff; border-radius: 26px; padding: 14px 20px;
+           font-size: 40px; box-shadow: 0 12px 28px rgba(20,10,60,.35); margin-bottom: 8px; }
+  .plate span { display: inline-block; animation: hop 2.4s ease-in-out infinite; }
+  .plate span:nth-child(2) { animation-delay: .15s; } .plate span:nth-child(3) { animation-delay: .3s; }
+  .plate span:nth-child(4) { animation-delay: .45s; }
+  @keyframes hop { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(-8px); } }
+  .guess { margin: 0 0 26px; font-weight: 800; color: var(--soft); }
+  .stores { display: grid; gap: 12px; }
+  .store { display: block; padding: 17px 20px; border-radius: 20px; text-decoration: none; color: var(--a);
+           background: #fff; font-size: 19px; font-weight: 900; box-shadow: 0 10px 24px rgba(20,10,60,.3);
+           transition: transform .15s; }
+  .store:active { transform: scale(.97); }
+  .store small { display: block; font-size: 13px; font-weight: 700; opacity: .65; }
+  .store.main { background: #ffd23f; color: #2a1f00; }
+  .free { margin: 18px 0 0; font-size: 14px; color: var(--soft); }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="drift" aria-hidden="true">
+  <span style="left:8%;top:12%">🎬</span><span style="left:82%;top:18%;animation-delay:-3s">🎵</span>
+  <span style="left:14%;top:70%;animation-delay:-6s">🎮</span><span style="left:76%;top:78%;animation-delay:-9s">📚</span>
+  <span style="left:48%;top:4%;animation-delay:-4s">📺</span><span style="left:50%;top:92%;animation-delay:-8s">🌍</span>
+</div>
+<main>
+  <div class="lang" role="group" aria-label="Language">
+    <button id="l-it" aria-pressed="false">IT</button><button id="l-en" aria-pressed="false">EN</button>
+  </div>
+  <img class="icon" src="emotiquiz-icon.png" alt="EmotiQuiz" width="128" height="128">
+  <h1>EmotiQuiz</h1>
+  <p class="tag" id="tag"></p>
+  <div><div class="plate" aria-hidden="true"><span>🔙</span><span>🚗</span><span>⚡</span><span>⏰</span></div></div>
+  <p class="guess" id="guess"></p>
+  <div class="stores">
+    <a class="store" id="ios" href="#"><small id="ios-s"></small>App Store</a>
+    <a class="store" id="android" href="#"><small id="android-s"></small>Google Play</a>
+  </div>
+  <p class="free" id="free"></p>
+</main>
+<script>
+// Link in bio: one URL for every post. Opens the right store for the phone
+// and passes the post's campaign on, so downloads can be traced back:
+//   /play?c=post-12            (source defaults to "instagram")
+//   /play?s=tiktok&c=reel-3
+const APPLE = "https://apps.apple.com/it/app/emotiquiz-quiz-con-le-emoji/id6827072072";
+const PLAY = "https://play.google.com/store/apps/details?id=com.emotiquiz.app";
+// Provider token (pt) from App Store Connect → Analytics → Campaigns; Apple
+// reports a campaign (ct, 40 characters at most) only together with it.
+const APPLE_PT = "129674867";
+
+const q = new URLSearchParams(location.search);
+const source = (q.get("s") || "instagram").slice(0, 30);
+const campaign = (q.get("c") || "bio").slice(0, 60);
+
+const ios = new URL(APPLE);
+if (APPLE_PT) { ios.searchParams.set("pt", APPLE_PT); ios.searchParams.set("ct", (source + "_" + campaign).slice(0, 40)); }
+const play = new URL(PLAY);
+play.searchParams.set("referrer", new URLSearchParams({
+  utm_source: source, utm_medium: "social", utm_campaign: campaign }).toString());
+
+const T = {
+  it: { tag: "Indovina film, serie e canzoni dalle emoji", guess: "Che film è? 👀",
+        go: "Scarica gratis su", free: "Gratis · Niente registrazione · Oltre 1.000 quiz" },
+  en: { tag: "Guess movies, shows and songs from emoji", guess: "What movie is it? 👀",
+        go: "Get it free on", free: "Free · No sign-up · 1,000+ quizzes" },
+};
+const $ = (id) => document.getElementById(id);
+function show(lang) {
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  $("tag").textContent = t.tag; $("guess").textContent = t.guess; $("free").textContent = t.free;
+  $("ios-s").textContent = $("android-s").textContent = t.go;
+  $("l-it").setAttribute("aria-pressed", lang === "it");
+  $("l-en").setAttribute("aria-pressed", lang === "en");
+}
+$("ios").href = ios.href;
+$("android").href = play.href;
+$("l-it").onclick = () => show("it");
+$("l-en").onclick = () => show("en");
+show((navigator.language || "").toLowerCase().startsWith("it") ? "it" : "en");
+
+// The phone's own store leads and comes first; the other stays a tap away.
+const ua = navigator.userAgent;
+const isAndroid = /Android/i.test(ua);
+if (isAndroid) { $("android").classList.add("main"); $("android").parentNode.prepend($("android")); }
+else { $("ios").classList.add("main"); }
+</script>
+</body>
+</html>
