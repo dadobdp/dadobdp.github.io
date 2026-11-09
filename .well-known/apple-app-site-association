@@ -3,7 +3,10 @@
     "details": [
       {
         "appIDs": ["XS67F69U4Y.com.emotiquiz.app"],
-        "components": [{ "/": "/r", "comment": "A friend's rebus" }]
+        "components": [
+          { "/": "/r", "comment": "A friend's rebus" },
+          { "/": "/event/*", "comment": "An in-app event (App Store)" }
+        ]
       }
     ]
   }
