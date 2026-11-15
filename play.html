@@ -8,6 +8,11 @@
 <meta property="og:title" content="EmotiQuiz · Guess it from the emoji">
 <meta property="og:description" content="Indovina film, serie e canzoni dalle emoji. Free on iPhone and Android.">
 <meta property="og:image" content="https://dadobdp.github.io/emotiquiz-icon.png">
+<link rel="alternate" hreflang="it" href="https://dadobdp.github.io/play?lang=it">
+<link rel="alternate" hreflang="en" href="https://dadobdp.github.io/play?lang=en">
+<link rel="alternate" hreflang="es" href="https://dadobdp.github.io/play?lang=es">
+<link rel="alternate" hreflang="fr" href="https://dadobdp.github.io/play?lang=fr">
+<link rel="alternate" hreflang="de" href="https://dadobdp.github.io/play?lang=de">
 <link rel="icon" href="emotiquiz-icon.png">
 <style>
   :root { --a: #2b2fb8; --b: #8a3ff5; --fg: #fff; --soft: rgba(255,255,255,.78); }
@@ -29,7 +34,7 @@
   }
   .lang { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; display: flex;
           background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px; }
-  .lang button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; color: var(--soft); }
+  .lang button { all: unset; cursor: pointer; padding: 6px 9px; border-radius: 999px; font-size: 13px; font-weight: 800; color: var(--soft); }
   .lang button[aria-pressed="true"] { background: #fff; color: var(--a); }
   .icon { width: 128px; height: 128px; margin: 0 auto 18px; border-radius: 30px;
           box-shadow: 0 18px 40px rgba(20,10,60,.45); animation: pop .5s ease-out both; }
@@ -63,7 +68,7 @@
 </div>
 <main>
   <div class="lang" role="group" aria-label="Language">
-    <button id="l-it" aria-pressed="false">IT</button><button id="l-en" aria-pressed="false">EN</button>
+    <button data-set="it" aria-pressed="false">IT</button><button data-set="en" aria-pressed="false">EN</button><button data-set="es" aria-pressed="false">ES</button><button data-set="fr" aria-pressed="false">FR</button><button data-set="de" aria-pressed="false">DE</button>
   </div>
   <img class="icon" src="emotiquiz-icon.png" alt="EmotiQuiz" width="128" height="128">
   <h1>EmotiQuiz</h1>
@@ -81,6 +86,7 @@
 // and passes the post's campaign on, so downloads can be traced back:
 //   /play?c=post-12            (source defaults to "instagram")
 //   /play?s=tiktok&c=reel-3
+// ?lang=it|en|es|fr|de forces the language (else the device's, else English).
 const APPLE = "https://apps.apple.com/it/app/emotiquiz-quiz-con-le-emoji/id6827072072";
 const PLAY = "https://play.google.com/store/apps/details?id=com.emotiquiz.app";
 // Provider token (pt) from App Store Connect → Analytics → Campaigns; Apple
@@ -102,21 +108,39 @@ const T = {
         go: "Scarica gratis su", free: "Gratis · Niente registrazione · Oltre 1.000 quiz" },
   en: { tag: "Guess movies, shows and songs from emoji", guess: "What movie is it? 👀",
         go: "Get it free on", free: "Free · No sign-up · 1,000+ quizzes" },
+  es: { tag: "Adivina películas, series y canciones con emojis", guess: "¿Qué película es? 👀",
+        go: "Descárgala gratis en", free: "Gratis · Sin registro · Más de 1.000 acertijos" },
+  fr: { tag: "Devine films, séries et chansons en emojis", guess: "C'est quel film\u00a0? 👀",
+        go: "Télécharge-la gratuitement sur", free: "Gratuit · Sans inscription · Plus de 1\u00a0000 rébus" },
+  de: { tag: "Errate Filme, Serien und Songs aus Emoji", guess: "Welcher Film ist das? 👀",
+        go: "Kostenlos laden:", free: "Kostenlos · Ohne Anmeldung · Über 1.000 Rätsel" },
 };
+const TITLE = { it: "EmotiQuiz · Gioca gratis", en: "EmotiQuiz · Play free", es: "EmotiQuiz · Juega gratis",
+                fr: "EmotiQuiz · Joue gratuitement", de: "EmotiQuiz · Kostenlos spielen" };
+const LANGS = Object.keys(T);
 const $ = (id) => document.getElementById(id);
 function show(lang) {
   const t = T[lang];
   document.documentElement.lang = lang;
+  document.title = TITLE[lang];
+  document.querySelector('meta[name="description"]').content = t.tag + ".";
   $("tag").textContent = t.tag; $("guess").textContent = t.guess; $("free").textContent = t.free;
   $("ios-s").textContent = $("android-s").textContent = t.go;
-  $("l-it").setAttribute("aria-pressed", lang === "it");
-  $("l-en").setAttribute("aria-pressed", lang === "en");
+  for (const b of document.querySelectorAll(".lang button")) b.setAttribute("aria-pressed", b.dataset.set === lang);
+}
+function pickLang() {
+  const forced = (q.get("lang") || "").toLowerCase();
+  if (LANGS.includes(forced)) return forced;
+  for (const l of navigator.languages || [navigator.language || ""]) {
+    const c = (l || "").slice(0, 2).toLowerCase();
+    if (LANGS.includes(c)) return c;
+  }
+  return "en";
 }
 $("ios").href = ios.href;
 $("android").href = play.href;
-$("l-it").onclick = () => show("it");
-$("l-en").onclick = () => show("en");
-show((navigator.language || "").toLowerCase().startsWith("it") ? "it" : "en");
+for (const b of document.querySelectorAll(".lang button")) b.onclick = () => show(b.dataset.set);
+show(pickLang());
 
 // The phone's own store leads and comes first; the other stays a tap away.
 const ua = navigator.userAgent;

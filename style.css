@@ -40,3 +40,16 @@ h3 { margin-top: 1.5em; }
 a { color: var(--accent); }
 .muted { color: var(--muted); font-size: .95rem; }
 footer { text-align: center; color: var(--muted); font-size: .9rem; margin-top: 48px; }
+/* Language switch (index.html): html[data-lang] shows that language only. */
+.switch { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
+.switch[hidden] { display: none; }
+.switch button {
+  font: inherit; font-size: .8rem; font-weight: 800; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--accent);
+  background: transparent; color: var(--accent);
+}
+.switch button[aria-pressed="true"] { background: var(--accent); color: var(--card); }
+html[data-lang] [data-l] { display: none; }
+html[data-lang="it"] [data-l="it"], html[data-lang="en"] [data-l="en"],
+html[data-lang="es"] [data-l="es"], html[data-lang="fr"] [data-l="fr"],
+html[data-lang="de"] [data-l="de"] { display: revert; }

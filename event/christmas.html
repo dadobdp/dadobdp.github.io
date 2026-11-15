@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EmotiQuiz · Christmas</title>
+<script>
+  // Title in the device's language (English otherwise); the page redirects at once.
+  const XMAS = { it: "Natale", en: "Christmas", es: "Navidad", fr: "Noël", de: "Weihnachten" };
+  for (const l of navigator.languages || [navigator.language || ""]) {
+    const c = (l || "").slice(0, 2).toLowerCase();
+    if (XMAS[c]) { document.documentElement.lang = c; document.title = "EmotiQuiz · " + XMAS[c]; break; }
+  }
+</script>
 <!-- The app opens this link itself (universal link); without the app,
      the download page. -->
 <meta http-equiv="refresh" content="0; url=/play">

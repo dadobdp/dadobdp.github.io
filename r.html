@@ -58,38 +58,85 @@
 // Same format as lib/features/rebus/data/rebus_link.dart: "1" + base64url
 // (no padding) of the UTF-8 JSON, XORed with the key. Change both together.
 const KEY = "emotiquiz";
-const IT = (navigator.language || "").toLowerCase().startsWith("it");
-const T = IT ? {
-  title: "Un amico ti sfida!", from: (n) => n + " ti sfida!", guess: "La tua risposta…", check: "Verifica",
-  wrong: "Non è questa: riprova", giveup: "Fammi vedere la risposta", won: "Esatto! 🎉", was: "La risposta era",
-  open: "Apri in EmotiQuiz", get: "Non hai l'app? Scaricala gratis e crea i tuoi rebus:",
-  broken: "Questo link non si apre: chiedi al tuo amico di rimandarlo.",
-  kinds: ["🎬 Un film", "📺 Una serie TV", "🎵 Una canzone", "✨ Altro"],
-} : {
-  title: "A friend challenges you!", from: (n) => n + " challenges you!", guess: "Your answer…", check: "Check",
-  wrong: "Not this one: try again", giveup: "Show me the answer", won: "Correct! 🎉", was: "The answer was",
-  open: "Open in EmotiQuiz", get: "No app yet? Get it for free and make your own rebus:",
-  broken: "This rebus link doesn't open: ask your friend to send it again.",
-  kinds: ["🎬 A film", "📺 A TV series", "🎵 A song", "✨ Something else"],
+// Language: ?lang=xx, else the device's first supported one, else English.
+// Wording as in the app (lib/l10n/app_*.arb).
+const STRINGS = {
+  it: {
+    title: "Un amico ti sfida!", from: (n) => n + " ti sfida!", guess: "La tua risposta…", check: "Verifica",
+    wrong: "Non è questa: riprova", giveup: "Fammi vedere la risposta", won: "Esatto! 🎉", was: "La risposta era",
+    open: "Apri in EmotiQuiz", get: "Non hai l'app? Scaricala gratis e crea i tuoi rebus:",
+    broken: "Questo link non si apre: chiedi al tuo amico di rimandarlo.",
+    kinds: ["🎬 Un film", "📺 Una serie TV", "🎵 Una canzone", "✨ Altro"],
+    page: "EmotiQuiz · Rebus", desc: "Un amico ti sfida con un rebus di emoji.",
+  },
+  en: {
+    title: "A friend challenges you!", from: (n) => n + " challenges you!", guess: "Your answer…", check: "Check",
+    wrong: "Not this one: try again", giveup: "Show me the answer", won: "Correct! 🎉", was: "The answer was",
+    open: "Open in EmotiQuiz", get: "No app yet? Get it for free and make your own rebus:",
+    broken: "This rebus link doesn't open: ask your friend to send it again.",
+    kinds: ["🎬 A film", "📺 A TV series", "🎵 A song", "✨ Something else"],
+    page: "EmotiQuiz · Rebus", desc: "A friend challenges you with an emoji rebus.",
+  },
+  es: {
+    title: "¡Un amigo te reta!", from: (n) => "¡" + n + " te reta!", guess: "Tu respuesta…", check: "Comprobar",
+    wrong: "Esa no: inténtalo de nuevo", giveup: "Enséñame la respuesta", won: "¡Correcto! 🎉", was: "La respuesta era",
+    open: "Abrir en EmotiQuiz", get: "¿Aún no tienes la app? Descárgala gratis y crea tus propios jeroglíficos:",
+    broken: "Este enlace de jeroglífico no se abre: pídele a tu amigo que te lo envíe de nuevo.",
+    kinds: ["🎬 Una película", "📺 Una serie de TV", "🎵 Una canción", "✨ Otra cosa"],
+    page: "EmotiQuiz · Jeroglífico", desc: "Un amigo te reta con un jeroglífico de emojis.",
+  },
+  fr: {
+    title: "Un ami te lance un défi\u00a0!", from: (n) => n + " te lance un défi\u00a0!", guess: "Ta réponse…", check: "Valider",
+    wrong: "Ce n'est pas ça\u00a0: réessaie", giveup: "Montre-moi la réponse", won: "Bravo\u00a0! 🎉", was: "La réponse était",
+    open: "Ouvrir dans EmotiQuiz", get: "Pas encore l'appli\u00a0? Télécharge-la gratuitement et crée tes propres rébus\u00a0:",
+    broken: "Ce lien de rébus ne s'ouvre pas\u00a0: demande à ton ami de le renvoyer.",
+    kinds: ["🎬 Un film", "📺 Une série TV", "🎵 Une chanson", "✨ Autre chose"],
+    page: "EmotiQuiz · Rébus", desc: "Un ami te lance un défi avec un rébus d'emojis.",
+  },
+  de: {
+    title: "Ein Freund fordert dich heraus!", from: (n) => n + " fordert dich heraus!", guess: "Deine Antwort …", check: "Prüfen",
+    wrong: "Nicht ganz: versuch's nochmal", giveup: "Antwort zeigen", won: "Richtig! 🎉", was: "Die Antwort war",
+    open: "In EmotiQuiz öffnen", get: "Noch keine App? Hol sie dir kostenlos und erstelle eigene Rebusse:",
+    broken: "Dieser Rebus-Link lässt sich nicht öffnen: Bitte deinen Freund, ihn nochmal zu schicken.",
+    kinds: ["🎬 Ein Film", "📺 Eine Serie", "🎵 Ein Song", "✨ Etwas anderes"],
+    page: "EmotiQuiz · Rebus", desc: "Ein Freund fordert dich mit einem Emoji-Rebus heraus.",
+  },
 };
+const LANG = (() => {
+  const forced = (new URLSearchParams(location.search).get("lang") || "").toLowerCase();
+  if (STRINGS[forced]) return forced;
+  for (const l of navigator.languages || [navigator.language || ""]) {
+    const c = (l || "").slice(0, 2).toLowerCase();
+    if (STRINGS[c]) return c;
+  }
+  return "en";
+})();
+const T = STRINGS[LANG];
 const KINDS = T.kinds;
 // Newer links name the game's category ("c"; keep in step with
 // assets/content/categories.json); "k" stays for older ones.
 const CATEGORIES = {
-  film: ["🎬", "Film", "Movies"], serie: ["📺", "Serie TV", "TV Series"],
-  musica: ["🎵", "Canzoni", "Songs"],
-  animazione: ["🧸", "Cartoni e animazione", "Cartoons & Animation"],
-  modi: ["🗣️", "Modi di dire", "Sayings & Idioms"],
-  luoghi: ["🌍", "Luoghi del mondo", "Places of the World"],
-  paesi: ["🚩", "Paesi", "Countries"], videogiochi: ["🎮", "Videogiochi", "Video Games"],
-  libri: ["📚", "Libri", "Books"],
+  film: ["🎬", { it: "Film", en: "Movies", es: "Películas", fr: "Films", de: "Filme" }],
+  serie: ["📺", { it: "Serie TV", en: "TV Series", es: "Series de TV", fr: "Séries TV", de: "Serien" }],
+  musica: ["🎵", { it: "Canzoni", en: "Songs", es: "Canciones", fr: "Chansons", de: "Songs" }],
+  animazione: ["🧸", { it: "Cartoni e animazione", en: "Cartoons & Animation", es: "Dibujos animados",
+                       fr: "Dessins animés", de: "Zeichentrick & Animation" }],
+  modi: ["🗣️", { it: "Modi di dire", en: "Sayings & Idioms", es: "Dichos y refranes",
+                 fr: "Expressions et proverbes", de: "Redewendungen" }],
+  luoghi: ["🌍", { it: "Luoghi del mondo", en: "Places of the World", es: "Lugares del mundo",
+                   fr: "Lieux du monde", de: "Orte der Welt" }],
+  paesi: ["🚩", { it: "Paesi", en: "Countries", es: "Países", fr: "Pays", de: "Länder" }],
+  videogiochi: ["🎮", { it: "Videogiochi", en: "Video Games", es: "Videojuegos", fr: "Jeux vidéo", de: "Videospiele" }],
+  libri: ["📚", { it: "Libri", en: "Books", es: "Libros", fr: "Livres", de: "Bücher" }],
 };
 const kindOf = (rebus) => {
   const c = CATEGORIES[rebus.c];
-  return c ? c[0] + " " + (IT ? c[1] : c[2]) : KINDS[rebus.k] || KINDS[3];
+  return c ? c[0] + " " + c[1][LANG] : KINDS[rebus.k] || KINDS[3];
 };
 const $ = (id) => document.getElementById(id);
-document.documentElement.lang = IT ? "it" : "en";
+document.documentElement.lang = LANG;
+document.title = T.page;
+document.querySelector('meta[name="description"]').content = T.desc;
 $("title").textContent = T.title;
 $("guess").placeholder = T.guess;
 $("check").textContent = T.check;
