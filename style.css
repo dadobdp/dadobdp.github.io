@@ -53,3 +53,10 @@ html[data-lang] [data-l] { display: none; }
 html[data-lang="it"] [data-l="it"], html[data-lang="en"] [data-l="en"],
 html[data-lang="es"] [data-l="es"], html[data-lang="fr"] [data-l="fr"],
 html[data-lang="de"] [data-l="de"] { display: revert; }
+/* App Store link (index.html): text button, no Apple badge image. */
+.get { text-align: center; margin: 20px 0 4px; }
+.store-btn {
+  display: inline-block; padding: 12px 22px; border-radius: 14px;
+  background: var(--text); color: var(--bg); font-weight: 800; text-decoration: none;
+}
+.get + .muted { text-align: center; margin-top: 8px; }
